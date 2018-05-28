@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<h1><center>Research Funding Sources for Computer Science and Statistics<br>
+at University of Washington</center></h1>
+<svg width="960" height="600"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var baseNodes = [
+  { id: 'UW', group: 0 && 1, label: 'UW', level: 1},
+  { id: 'CS', group: 0, label: 'CS', level: 2 },
+  { id: 'STATS', group: 1, label: 'STATS ', level: 2 },
+  { id: 'Google', group: 0, label: 'Google' , level: 3 },
+  { id: 'INTL', group: 0, label: 'Intel', level: 3 },
+  { id: 'MS', group: 0, label: 'Microsoft', level: 3 },
+  { id: 'NSF', group: 0 && 1, label: 'NSF', level: 3 },
+  { id: 'ONR'   , group: 0, label: 'ONR', level: 3 },
+  { id: 'SLOAN', group: 0 && 1, label: 'SLOAN', level: 3 },
+  { id: 'NIGMS'   , group: 0 && 1, label: 'NIGMS', level: 3},
+  { id: 'NIH', group: 0 && 1, label: 'NIH', level: 3 },
+  { id: 'NSDSEG'  , group: 0 && 1, label: 'NSDSEG', level: 3 },
+  { id: 'SS'  , group: 0, label: 'Steven Seitz', level: 4 },
+  { id: 'JMH'  , group: 0, label: 'Jeffrey Micheal Heer', level: 4 },
+  { id: 'MB'  , group: 0, label: 'Magdalena Balazinska', level: 4 },
+  { id: 'RR'  , group: 0, label: 'Rajesh Rao', level: 4 },
+  { id: 'SIL'  , group: 0, label: 'Su-In Lee', level: 4 },
+  { id: 'PD'  , group: 0, label: 'Pedro Domingos', level: 4 },
+  { id: 'ZP'  , group: 0, label: 'Zoran Popvic', level: 4 },
+  { id: 'EBF', group: 0 && 1, label: 'Emily Beth Fox', level: 4 },
+  { id: 'DW', group: 1, label: 'Daniela Witten', level: 4 },
+  { id: 'MD', group: 1, label: 'Mathias Drton', level: 4},
+
+ 
+]
+
+var baseLinks = [
+  { target: 'CS', source: 'UW', strength: 0.4 },
+  { target: 'STATS', source: 'UW', strength: 0.4 },
+  { target: 'NSF', source: 'CS', strength: 0.1 },
+  { target: 'SLOAN', source: 'CS', strength: 0.2 },
+  { target: 'MS', source: 'CS', strength: 0.2 },
+  { target: 'NIGMS', source: 'CS', strength: 0.2 },
+  { target: 'ONR', source: 'CS', strength: 0.2 },
+  { target: 'INTL', source: 'CS', strength: 0.2 },
+  { target: 'Google', source: 'CS', strength: 0.2 },
+  { target: 'NSDSEG', source: 'CS', strength: 0.2 },
+  { target: 'NIH', source: 'CS', strength: 0.1},
+  { target: 'NIH', source: 'STATS', strength: 0.1},
+  { target: 'JMH', source: 'MS', strength: 0.1 },
+  { target: 'JMH', source:'SLOAN', strength: 0.1 },
+  { target: 'JMH', source:'NSDSEG', strength: 0.1 },
+  { target: 'MB', source: 'NSF', strength: 0.1 },
+  { target: 'RR', source: 'SLOAN', strength: 0.1 },
+  { target: 'RR', source: 'NSF',  strength: 0.1 }, 
+  { target: 'RR', source: 'ONR', strength: 0.1 },
+  { target: 'SIL', source: 'NSF', strength: 0.1 },
+  { target: 'SIL', source: 'NIH', strength: 0.1 },
+  { target: 'ZP', source: 'NSF', strength: 0.1 }, 
+  { target: 'ZP', source: 'SLOAN', strength: 0.1 },
+  { target: 'SS', source: 'Google', strength: 0.1 },
+  { target: 'SS', source: 'INTL', strength: 0.1 },
+  { target: 'SS', source: 'NSF', strength: 0.1 },
+  { target: 'SS', source: 'ONR', strength: 0.1 }, 
+  { target: 'SS', source: 'SLOAN', strength: 0.1 },
+  { target: 'NSF', source: 'STATS', strength: 0.1 },
+  { target: 'NIH', source: 'STATS', strength: 0.1 },
+  { target: 'SLOAN', source: 'STATS', strength: 0.1 },  
+  { target: 'NSDSEG', source: 'STATS', strength: 0.1 },
+  { target: 'EBF', source: 'NSF', strength: 0.1 },
+  { target: 'EBF', source: 'NIH', strength: 0.1 },
+  { target: 'DW', source: 'SLOAN', strength: 0.1 },
+  { target: 'DW', source: 'NIGMS', strength: 0.1 },
+  { target: 'DW', source: 'NIH', strength: 0.1 }, 
+  { target: 'DW', source: 'NSDSEG', strength: 0.1 },
+  { target: 'DW', source: 'NSF', strength: 0.1 },   
+  { target: 'MD', source: 'NSF', strength: 0.1},
+  { target: 'PD', source: 'NSF', strength: 0.1},
+  { target: 'PD', source: 'SLOAN', strength: 0.1},
+  
+]
+// set nodes and linkes to the above data
+var nodes = [...baseNodes]
+var links = [...baseLinks]
+
+// gets the neighbor of the node  
+function getNeighbors(node) {
+  return baseLinks.reduce(function (neighbors, link) {
+      if (link.target.id === node.id) {
+        neighbors.push(link.source.id)
+      } else if (link.source.id === node.id) {
+        neighbors.push(link.target.id)
+      }
+      return neighbors
+    },
+    [node.id]
+  )
+}
+
+// checks if node is neighbor of other node and provids link
+function isNeighborLink(node, link) {
+  return link.target.id === node.id || link.source.id === node.id
+}
+
+// sets and gets the node color depending on the level/relationship
+function getNodeColor(node, neighbors) {
+  if (Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1) {
+    return node.level === 2 ? 'blue' : 'green'
+  }
+  if (Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1) {
+    return node.level === 3 ? 'green' : 'black'
+  }
+  if (Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1) {
+    return node.level === 4 ? 'black' : 'purple'
+  }
+}
+
+
+function getLinkColor(node, link) {
+  return isNeighborLink(node, link) ? 'green' : '#E5E5E5'
+}
+
+function getTextColor(node, neighbors) {
+  return Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1 ? 'green' : 'black'
+}
+
+// set width and height of window
+var width = window.innerWidth
+var height = window.innerHeight
+
+// create svg using d3
+var svg = d3.select('svg')
+svg.attr('width', width).attr('height', height)
+
+// append data and attributes to the svg
+svg.append("defs").selectAll("marker")
+    .data(["suit", "licensing", "resolved"])
+  .enter().append("marker")
+    .attr("id", function(d) { return d; })
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 25)
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto")
+  .append("path")
+    .attr("d", "M0,-5L10,0L0,5 L10,0 L0, -5")
+    .style("stroke", "#4679BD")
+    .style("opacity", "0.6");
+
+var linkElements,
+  nodeElements,
+  textElements
+
+// group elements together locally
+var linkGroup = svg.append('g').attr('class', 'links')
+var nodeGroup = svg.append('g').attr('class', 'nodes')
+var textGroup = svg.append('g').attr('class', 'texts')
+
+// when click the same element "twice" select OR deselect element
+var selectedId
+
+// add forces
+var linkForce = d3
+  .forceLink()
+  .id(function (link) { return link.id })
+  .strength(function (link) { return link.strength })
+
+// simulation with the added forces to create the interactivity
+// nodes
+var simulation = d3
+  .forceSimulation()
+  .force('link', linkForce)
+  .force('charge', d3.forceManyBody().strength(-120))
+  .force('center', d3.forceCenter(width / 2, height / 2))
+
+// drag drop feature for being able to click node and drag it to new
+// area while connections stay intact
+var dragDrop = d3.drag().on('start', function (node) {
+  node.fx = node.x
+  node.fy = node.y
+}).on('drag', function (node) {
+  simulation.alphaTarget(0.7).restart()
+  node.fx = d3.event.x
+  node.fy = d3.event.y
+}).on('end', function (node) {
+  if (!d3.event.active) {
+    simulation.alphaTarget(0)
+  }
+  node.fx = null
+  node.fy = null
+})
+
+// each click select node, update data or reset if 
+// the same node is clicked twice
+function selectNode(selectedNode) {
+  if (selectedId === selectedNode.id) {
+    selectedId = undefined
+    resetData()
+    updateSimulation()
+  } else {
+    selectedId = selectedNode.id
+    updateData(selectedNode)
+    updateSimulation()
+  }
+
+  var neighbors = getNeighbors(selectedNode)
+
+  // highlight selected nodes
+  nodeElements.attr('fill', function (node) { return getNodeColor(node, neighbors) })
+  textElements.attr('fill', function (node) { return getTextColor(node, neighbors) })
+  linkElements.attr('stroke', function (link) { return getLinkColor(selectedNode, link) })
+}
+
+// resets to starting set up (i.e. color, connections visualized)
+function resetData() {
+  var nodeIds = nodes.map(function (node) { return node.id })
+
+  baseNodes.forEach(function (node) {
+    if (nodeIds.indexOf(node.id) === -1) {
+      nodes.push(node)
+    }
+  })
+
+  links = baseLinks
+}
+
+// updates the relationship strength of the nodes, 
+// links, etc
+function updateData(selectedNode) {
+  var neighbors = getNeighbors(selectedNode)
+  var newNodes = baseNodes.filter(function (node) {
+    return neighbors.indexOf(node.id) > -1 || node.level === 1
+  })
+
+  var diff = {
+    removed: nodes.filter(function (node) { return newNodes.indexOf(node) === -1 }),
+    added: newNodes.filter(function (node) { return nodes.indexOf(node) === -1 })
+  }
+
+  diff.removed.forEach(function (node) { nodes.splice(nodes.indexOf(node), 1) })
+  diff.added.forEach(function (node) { nodes.push(node) })
+
+  links = baseLinks.filter(function (link) {
+    return link.target.id === selectedNode.id || link.source.id === selectedNode.id
+  })
+}
+
+// updates the graphs with the node elements and attributes
+function updateGraph() {
+
+  linkElements = linkGroup.selectAll('line')
+    .data(links, function (link) {
+      return link.target.id + link.source.id
+    })
+ 
+  linkElements.exit().remove()
+
+  var linkEnter = linkElements
+    .enter().append('line')
+    .attr('stroke-width', 1)
+    .attr('stroke', 'rgba(50, 50, 50, 0.2)')
+	.style("marker-end",  "url(#suit)")
+  
+  linkElements = linkEnter.merge(linkElements)
+
+  nodeElements = nodeGroup.selectAll('circle')
+    .data(nodes, function (node) { return node.id })
+
+  nodeElements.exit().remove()
+
+  var nodeEnter = nodeElements
+    .enter()
+    .append('circle')
+    .attr('r', 10)
+    .attr('fill', function (node) { return node.level === 1 ? 'red' : 'gray' })
+    .call(dragDrop)
+    .on('click', selectNode)
+
+  nodeElements = nodeEnter.merge(nodeElements)
+
+  // adds texts to the nodes
+  textElements = textGroup.selectAll('text')
+    .data(nodes, function (node) { return node.id })
+
+  textElements.exit().remove()
+
+  var textEnter = textElements
+    .enter()
+    .append('text')
+    .text(function (node) { return node.label })
+    .attr('font-size', 15)
+    .attr('dx', 15)
+    .attr('dy', 4)
+
+  textElements = textEnter.merge(textElements)
+}
+
+//Restart the visualisation after any node and link changes
+function restart() {
+	link = link.data(graph.links);
+	link.exit().remove();
+	link.enter().insert("line", ".node").attr("class", "link");
+	node = node.data(graph.nodes);
+	node.enter().insert("circle", ".cursor").attr("class", "node").attr("r", 5).call(force.drag);
+	force.start();
+}
+
+// updates the user experience
+function updateSimulation() {
+  updateGraph()
+
+  simulation.nodes(nodes).on('tick', () => {
+    nodeElements
+      .attr('cx', function (node) { return node.x })
+      .attr('cy', function (node) { return node.y })
+    textElements
+      .attr('x', function (node) { return node.x })
+      .attr('y', function (node) { return node.y })
+    linkElements
+      .attr('x1', function (link) { return link.source.x })
+      .attr('y1', function (link) { return link.source.y })
+      .attr('x2', function (link) { return link.target.x })
+      .attr('y2', function (link) { return link.target.y })
+  })
+
+  simulation.force('link').links(links)
+  simulation.alphaTarget(0.7).restart()
+}
+
+
+// start the initial render
+updateSimulation()
+
+</script>
+</body>
+</html>
